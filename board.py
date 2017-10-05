@@ -1,38 +1,37 @@
+import copy
+
 board_size=3
+finishedBoard = [[i + (j * board_size) for i in range(board_size)] for j in range(board_size)]
+
 
 class board:
-    board = [[i + j for i in range(board_size)] for j in range(board_size)]
-    finishedBoard = [[i + (j * board_size) for i in range(board_size)] for j in range(board_size)]
 
+    def __init__(self, instance, zero_tile_position):
+        self.instance = instance
+        if self.instance[zero_tile_position[0]][zero_tile_position[1]] != 0:
+            raise ValueError("zero tile value must be 0!")
+        self.zeroTile = self.zeroTile(zero_tile_position)
 
+    def switch(self, with_row_and_column):
 
-    def __init__(self, position):
-        self.position = position
-        self.neighbors = self.findNeighbours()
-
-    def switch(self, row_and_column, with_row_and_column):
-        if self.isFinished():
-            return True, board
-
-        row = row_and_column[0]
-        column = row_and_column[1]
+        zero_row = self.zeroTile.position[0]
+        zero_column = self.zeroTile.position[1]
 
         with_row = with_row_and_column[0]
         with_column = with_row_and_column[1]
 
-        value = board[row][column]
-        with_value = board[with_row][with_column]
+        with_value = self.instance[with_row][with_column]
 
-        if value != 0 and with_value != 0:
-            raise ValueError('Only the 0 field can be switched')
+        instance = self.instance
+        instance[zero_row][zero_column] = with_value
+        instance[with_row][with_column] = 0
 
-        board[row][column] = with_value
-        board[with_row][with_column] = value
+        new_board = board(instance, [with_row, with_column])
 
-        return self.isFinished(), board
+        return new_board
 
     def isFinished(self):
-        return self.board == self.finishedBoard
+        return self.instance == finishedBoard
 
     class zeroTile:
 
@@ -46,9 +45,9 @@ class board:
             row = self.position[0]
             column = self.position[1]
 
-            up = [row, column - 1] if column - 1 >= 0 else None
-            down = [row, column + 1] if column + 1 <= board_size else None
-            left = [row - 1, column] if row - 1 >= 0 else None
-            right = [row + 1, column] if row + 1 <= board_size else None
+            up = [row - 1, column] if row - 1 >= 0 else None
+            down = [row + 1, column] if row + 1 <= board_size else None
+            left = [row, column - 1] if column - 1 >= 0 else None
+            right = [row, column + 1] if column + 1 <= board_size else None
 
             return up, down, left, right
