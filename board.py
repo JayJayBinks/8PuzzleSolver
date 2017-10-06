@@ -3,37 +3,47 @@ import copy
 board_size=3
 finishedBoard = [[i + (j * board_size) for i in range(board_size)] for j in range(board_size)]
 
+class Board:
 
-class board:
-
-    def __init__(self, instance, zero_tile_position):
-        self.instance = instance
-        if self.instance[zero_tile_position[0]][zero_tile_position[1]] != 0:
+    def __init__(self, values, zero_tile_position, list_of_moves=[]):
+        self.list_of_moves = list(list_of_moves)
+        self.values = values
+        if self.values[zero_tile_position[0]][zero_tile_position[1]] != 0:
             raise ValueError("zero tile value must be 0!")
-        self.zeroTile = self.zeroTile(zero_tile_position)
+        self.zero_tile = Board.ZeroTile(zero_tile_position)
 
     def switch(self, with_row_and_column):
-
-        zero_row = self.zeroTile.position[0]
-        zero_column = self.zeroTile.position[1]
+        zero_row = self.zero_tile.position[0]
+        zero_column = self.zero_tile.position[1]
 
         with_row = with_row_and_column[0]
         with_column = with_row_and_column[1]
+        with_value = self.values[with_row][with_column]
 
-        with_value = self.instance[with_row][with_column]
-
-        instance = self.instance
+        instance = copy.deepcopy(self.values)
         instance[zero_row][zero_column] = with_value
         instance[with_row][with_column] = 0
 
-        new_board = board(instance, [with_row, with_column])
+        new_board = Board(instance, [with_row, with_column], self.list_of_moves)
+
+        self.update_moves_list(new_board, with_column, with_row, zero_column, zero_row)
 
         return new_board
 
-    def isFinished(self):
-        return self.instance == finishedBoard
+    def update_moves_list(self, new_board, with_column, with_row, zero_column, zero_row):
+        if zero_row > with_row and zero_column == with_column:
+            new_board.list_of_moves.append("Up")
+        if zero_row < with_row and zero_column == with_column:
+            new_board.list_of_moves.append("Down")
+        if zero_row == with_row and zero_column > with_column:
+            new_board.list_of_moves.append("Left")
+        if zero_row == with_row and zero_column < with_column:
+            new_board.list_of_moves.append("Right")
 
-    class zeroTile:
+    def isFinished(self):
+        return self.values == finishedBoard
+
+    class ZeroTile:
 
         def __init__(self, position):
             self.position = position
@@ -46,8 +56,8 @@ class board:
             column = self.position[1]
 
             up = [row - 1, column] if row - 1 >= 0 else None
-            down = [row + 1, column] if row + 1 <= board_size else None
+            down = [row + 1, column] if row + 1 < board_size else None
             left = [row, column - 1] if column - 1 >= 0 else None
-            right = [row, column + 1] if column + 1 <= board_size else None
+            right = [row, column + 1] if column + 1 < board_size else None
 
             return up, down, left, right
