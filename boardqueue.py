@@ -1,13 +1,18 @@
-import queue
 from board import Board
+from collections import deque
 
-class BoardQueue(queue.Queue): # or OrderedSetQueue
+class BoardQueue(deque):
     def __contains__(self, board):
-        with self.mutex:
-            for element in self.queue:
-                if board.values == element.values:
-                    return True
-            return False
+        for element in self:
+            if board.values == element.values:
+                return True
+        return False
+
+    def pop(self):
+        return self.popleft()
+
+    def empty(self):
+        return len(self) == 0
 
 
 if __name__ == "__main__":
@@ -16,6 +21,9 @@ if __name__ == "__main__":
     board1 = Board(initList, [0, 1])
 
     frontier = BoardQueue()
-    frontier.put_nowait(board1)
-    board2 = board1.switch([0,0])
+    frontier.append(board1)
+    board2 = board1.swap([0, 0])
     print(board1 in frontier)
+
+    frontier.append(board2)
+    print(frontier.pop().values)

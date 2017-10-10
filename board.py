@@ -1,7 +1,6 @@
-import copy
 
-board_size=3
-finishedBoard = [[i + (j * board_size) for i in range(board_size)] for j in range(board_size)]
+size=3
+finishedBoard = [[i + (j * size) for i in range(size)] for j in range(size)]
 
 class Board:
 
@@ -12,7 +11,7 @@ class Board:
             raise ValueError("zero tile value must be 0!")
         self.zero_tile = Board.ZeroTile(zero_tile_position)
 
-    def switch(self, with_row_and_column):
+    def swap(self, with_row_and_column):
         zero_row = self.zero_tile.position[0]
         zero_column = self.zero_tile.position[1]
 
@@ -20,7 +19,7 @@ class Board:
         with_column = with_row_and_column[1]
         with_value = self.values[with_row][with_column]
 
-        instance = copy.deepcopy(self.values)
+        instance = [list(e) for e in self.values]
         instance[zero_row][zero_column] = with_value
         instance[with_row][with_column] = 0
 
@@ -43,6 +42,12 @@ class Board:
     def isFinished(self):
         return self.values == finishedBoard
 
+    def draw(self):
+        print(self.values[0][0:3])
+        print(self.values[1][0:3])
+        print(self.values[2][0:3])
+        print("-----------")
+
     class ZeroTile:
 
         def __init__(self, position):
@@ -56,8 +61,8 @@ class Board:
             column = self.position[1]
 
             up = [row - 1, column] if row - 1 >= 0 else None
-            down = [row + 1, column] if row + 1 < board_size else None
+            down = [row + 1, column] if row + 1 < size else None
             left = [row, column - 1] if column - 1 >= 0 else None
-            right = [row, column + 1] if column + 1 < board_size else None
+            right = [row, column + 1] if column + 1 < size else None
 
-            return up, down, left, right
+            return [up, down, left, right]
