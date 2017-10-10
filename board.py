@@ -1,12 +1,12 @@
-
 size=3
-finishedBoard = [[i + (j * size) for i in range(size)] for j in range(size)]
+finishedBoard = ((0,1,2),(3,4,5),(6,7,8))
+#[[i + (j * size) for i in range(size)] for j in range(size)]
 
 class Board:
 
     def __init__(self, values, zero_tile_position, list_of_moves=[]):
         self.list_of_moves = list(list_of_moves)
-        self.values = values
+        self.values = tuple(values)
         if self.values[zero_tile_position[0]][zero_tile_position[1]] != 0:
             raise ValueError("zero tile value must be 0!")
         self.zero_tile = Board.ZeroTile(zero_tile_position)
@@ -22,6 +22,7 @@ class Board:
         instance = [list(e) for e in self.values]
         instance[zero_row][zero_column] = with_value
         instance[with_row][with_column] = 0
+        instance = [tuple(e) for e in instance]
 
         new_board = Board(instance, [with_row, with_column], self.list_of_moves)
 

@@ -1,12 +1,6 @@
 from board import Board
 
 class BoardStack(list):
-    def __contains__(self, board):
-        for element in self:
-            if board.values == element.values:
-                return True
-        return False
-
     def empty(self):
         return len(self) == 0
 

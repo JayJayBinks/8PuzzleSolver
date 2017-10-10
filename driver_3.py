@@ -17,6 +17,7 @@ def read_board_values(tiles):
       if tile_value == 0:
           zero_position = [row, column]
       column += 1
+   values = [tuple(e) for e in values]
    return values, zero_position;
 
 

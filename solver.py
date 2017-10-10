@@ -1,10 +1,11 @@
 from time import time
 import os
 import psutil
-from board import Board
+import board
 from boardqueue import BoardQueue
-from boardlist import BoardList
 from boardstack import BoardStack
+
+meta = dict()
 
 class Solver:
 
@@ -16,8 +17,9 @@ class Solver:
 
     def __init__(self , algo, init_list, zero_position):
         self.algo = algo
-        self.board_state = Board(init_list, zero_position)
-        self.explored = BoardList()
+        self.board_state = board.Board(init_list, zero_position)
+        self.explored = set()
+        self.frontier_set = set()
 
     def enqueue_new_states(self):
         neighbours = self.board_state.zero_tile.neighbors
@@ -27,9 +29,10 @@ class Solver:
         for neighbour in neighbours:
             if neighbour is not None:
                 new_board = self.board_state.swap(neighbour)
-                if new_board not in self.explored and new_board not in self.frontier:
+                if new_board.values not in self.explored and new_board.values not in self.frontier_set:
                     #print("frotnier board")
                     #new_board.draw()
+                    self.frontier_set.add(new_board.values)
                     self.frontier.append(new_board)
 
     def solve(self):
@@ -57,14 +60,16 @@ class Solver:
 
         print("init board")
         self.board_state.draw()
-        self.explored.append(self.board_state)
+
+        self.explored.add(self.board_state.values)
         self.enqueue_new_states()
 
         while not self.frontier.empty():
             self.board_state = self.frontier.pop()
             #print("search board")
             #self.board_state.draw()
-            self.explored.append(self.board_state)
+            self.explored.add(self.board_state.values)
+            self.frontier_set.remove(self.board_state.values)
             self.nodes_expanded += 1
 
             if self.board_state.isFinished():
