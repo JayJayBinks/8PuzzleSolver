@@ -5,13 +5,15 @@ import board
 from boardqueue import BoardQueue
 from boardstack import BoardStack
 
+# keep track of the swapping history etc. to report the goal path when finished
 meta = dict()
+
 
 class Solver:
 
     nodes_expanded = 0
-    search_depth = "implement this"
-    max_search_depth = "implement this"
+    search_depth = 0
+    max_search_depth = 0
     running_time = 0
     max_ram_usage = 0
 
@@ -24,14 +26,15 @@ class Solver:
     def enqueue_new_states(self):
         neighbours = self.board_state.zero_tile.neighbors
         if self.algo == "dfs":
-            #stack is lifo so put "up" last
+            # stack is lifo so put "up" last
             neighbours = neighbours.__reversed__()
         for neighbour in neighbours:
             if neighbour is not None:
                 new_board = self.board_state.swap(neighbour)
                 if new_board.values not in self.explored and new_board.values not in self.frontier_set:
-                    #print("frotnier board")
-                    #new_board.draw()
+                    # print("frotnier board")
+                    # new_board.draw()
+                    Solver.update_moves_list(self.board_state, new_board, neighbour)
                     self.frontier_set.add(new_board.values)
                     self.frontier.append(new_board)
 
@@ -41,39 +44,44 @@ class Solver:
             "dfs": self._dfs,
             "ast": self._ast
         }
-        #find and execute algo
+        # find and execute algo
         switcher.get(self.algo, "not implemented")()
 
     def _print_stats(self):
-        print("path to goal:", self.board_state.list_of_moves)
-        print("cost_of_path:", len(self.board_state.list_of_moves))
+        goal_path = self._gen_goal_path()
+        print("path to goal:", goal_path)
+        print("cost_of_path:", len(goal_path))
         print("nodes_expanded:", self.nodes_expanded)
-        print("search_depth", self.max_search_depth)
+        print("search_depth", self.search_depth)
+        print("max_search_depth", self.max_search_depth)
         print("running_time", time() - self.t0, "seconds")
         print("max_ram_usage", self.process.memory_info().rss / float(2 ** 20), "Mbit")
 
+    # frontier needs to be queue or stack
     def _bfs_or_dfs(self, frontier):
         self.frontier = frontier
         self.t0 = time()
         self.process = psutil.Process(os.getpid())
         # frontier init
 
-        print("init board")
+        print("board to solve")
         self.board_state.draw()
 
         self.explored.add(self.board_state.values)
+        # no parents
+        meta[self.board_state.values] = [None, None]
         self.enqueue_new_states()
 
         while not self.frontier.empty():
             self.board_state = self.frontier.pop()
-            #print("search board")
-            #self.board_state.draw()
+            # print("search board")
+            # self.board_state.draw()
             self.explored.add(self.board_state.values)
             self.frontier_set.remove(self.board_state.values)
             self.nodes_expanded += 1
 
-            if self.board_state.isFinished():
-                #heureka found the path!
+            if self.board_state.is_finished():
+                # found the path!
                 self._print_stats()
                 break
 
@@ -87,3 +95,36 @@ class Solver:
 
     def _ast(self):
         raise NotImplementedError()
+
+    @staticmethod
+    def update_moves_list(old_board, new_board, neighbour):
+        zero_row = old_board.zero_tile.position[0]
+        zero_column = old_board.zero_tile.position[1]
+        with_row = neighbour[0]
+        with_column = neighbour[1]
+
+        move = None
+        if zero_row > with_row and zero_column == with_column:
+            move = "Up"
+        if zero_row < with_row and zero_column == with_column:
+            move = "Down"
+        if zero_row == with_row and zero_column > with_column:
+            move = "Left"
+        if zero_row == with_row and zero_column < with_column:
+            move = "Right"
+
+        meta[new_board.values] = (old_board.values, move)
+
+    def _gen_goal_path(self):
+        state = self.board_state.values
+        action_list = []
+        while True:
+            self.max_search_depth += 1
+            row = meta[state]
+            state = row[0]
+            action = row[1]
+            if state is None:
+                break
+            action_list.append(action)
+            self.search_depth += 1
+        return list(reversed(action_list))

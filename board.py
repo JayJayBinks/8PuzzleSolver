@@ -1,16 +1,19 @@
 size=3
-finishedBoard = ((0,1,2),(3,4,5),(6,7,8))
-#[[i + (j * size) for i in range(size)] for j in range(size)]
+finished_board = ((0, 1, 2), (3, 4, 5), (6, 7, 8))
+
+# a 3*3 sized board looks like this
+# (1, 2, 5)
+# (3, 4, 0)
+# (6, 7, 8)
+
 
 class Board:
 
-    def __init__(self, values, zero_tile_position, list_of_moves=[]):
-        self.list_of_moves = list(list_of_moves)
+    def __init__(self, values, zero_tile_position):
         self.values = tuple(values)
-        if self.values[zero_tile_position[0]][zero_tile_position[1]] != 0:
-            raise ValueError("zero tile value must be 0!")
         self.zero_tile = Board.ZeroTile(zero_tile_position)
 
+    # only the zero tile can be swapped
     def swap(self, with_row_and_column):
         zero_row = self.zero_tile.position[0]
         zero_column = self.zero_tile.position[1]
@@ -19,29 +22,16 @@ class Board:
         with_column = with_row_and_column[1]
         with_value = self.values[with_row][with_column]
 
+        # need to cast to list for swapping
         instance = [list(e) for e in self.values]
         instance[zero_row][zero_column] = with_value
         instance[with_row][with_column] = 0
         instance = [tuple(e) for e in instance]
 
-        new_board = Board(instance, [with_row, with_column], self.list_of_moves)
+        return Board(instance, [with_row, with_column])
 
-        self.update_moves_list(new_board, with_column, with_row, zero_column, zero_row)
-
-        return new_board
-
-    def update_moves_list(self, new_board, with_column, with_row, zero_column, zero_row):
-        if zero_row > with_row and zero_column == with_column:
-            new_board.list_of_moves.append("Up")
-        if zero_row < with_row and zero_column == with_column:
-            new_board.list_of_moves.append("Down")
-        if zero_row == with_row and zero_column > with_column:
-            new_board.list_of_moves.append("Left")
-        if zero_row == with_row and zero_column < with_column:
-            new_board.list_of_moves.append("Right")
-
-    def isFinished(self):
-        return self.values == finishedBoard
+    def is_finished(self):
+        return self.values == finished_board
 
     def draw(self):
         print(self.values[0][0:3])
@@ -53,9 +43,9 @@ class Board:
 
         def __init__(self, position):
             self.position = position
-            self.neighbors = self.findNeighbours()
+            self.neighbors = self.find_neighbours()
 
-        def findNeighbours(self):
+        def find_neighbours(self):
 
             # always visit child nodes in the "Up Down Left Right" order
             row = self.position[0]
