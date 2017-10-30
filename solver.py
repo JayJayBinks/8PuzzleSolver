@@ -1,6 +1,9 @@
-from time import time
 import os
+from queue import PriorityQueue
+from time import time
+
 import psutil
+
 import board
 from boardqueue import BoardQueue
 from boardstack import BoardStack
@@ -34,17 +37,23 @@ class Solver:
                 if new_board.values not in self.explored and new_board.values not in self.frontier_set:
                     # print("frotnier board")
                     # new_board.draw()
-                    Solver.update_moves_list(self.board_state, new_board, neighbour)
+                    Solver._update_moves_list(self.board_state, new_board, neighbour)
                     self.frontier_set.add(new_board.values)
                     self.frontier.append(new_board)
 
     def solve(self):
+        self.t0 = time()
+        self.process = psutil.Process(os.getpid())
         switcher = {
             "bfs": self._bfs,
             "dfs": self._dfs,
             "ast": self._ast
         }
         # find and execute algo
+        print("board to solve")
+        self.board_state.draw()
+        meta[self.board_state.values] = [None, None]
+
         switcher.get(self.algo, "not implemented")()
 
     def _print_stats(self):
@@ -60,16 +69,8 @@ class Solver:
     # frontier needs to be queue or stack
     def _bfs_or_dfs(self, frontier):
         self.frontier = frontier
-        self.t0 = time()
-        self.process = psutil.Process(os.getpid())
-        # frontier init
-
-        print("board to solve")
-        self.board_state.draw()
 
         self.explored.add(self.board_state.values)
-        # no parents
-        meta[self.board_state.values] = [None, None]
         self.enqueue_new_states()
 
         while not self.frontier.empty():
@@ -94,10 +95,47 @@ class Solver:
         self._bfs_or_dfs(BoardStack())
 
     def _ast(self):
-        raise NotImplementedError()
+        self.frontier = PriorityQueue()
+        self.frontier.put(self.board_state, 0)
+        self.frontier_set = set()
+
+        gscore = dict()
+        gscore[self.board_state.values] = 0
+
+        fscore = dict()
+        fscore[self.board_state.values] = gscore[self.board_state.values] + self.board_state.manhattan_distance
+
+        while not self.frontier.empty():
+            self.board_state = self.frontier.get()
+            # print("search board")
+            # self.board_state.draw()
+            self.explored.add(self.board_state.values)
+
+            if self.board_state.is_finished():
+                # found the path!
+                self._print_stats()
+                break
+
+            neighbours = self.board_state.zero_tile.neighbors
+            for neighbour in neighbours:
+                if neighbour is not None:
+                    new_board = self.board_state.swap(neighbour)
+                    self.nodes_expanded += 1
+                    if new_board.values in self.explored or new_board.values in self.frontier_set:
+                        continue
+
+                    gscore[new_board.values] = gscore[self.board_state.values] + self.board_state.cost(neighbour)
+                    fscore[new_board.values] = gscore[new_board.values] + new_board.manhattan_distance
+
+                    # print("frontier board")
+                    # print("manhattan distance: ", new_board.manhattan_distance)
+                    # new_board.draw()
+                    self.frontier.put(new_board, fscore[new_board.values])
+                    self.frontier_set.add(new_board.values)
+                    Solver._update_moves_list(self.board_state, new_board, neighbour)
 
     @staticmethod
-    def update_moves_list(old_board, new_board, neighbour):
+    def _update_moves_list(old_board, new_board, neighbour):
         zero_row = old_board.zero_tile.position[0]
         zero_column = old_board.zero_tile.position[1]
         with_row = neighbour[0]
